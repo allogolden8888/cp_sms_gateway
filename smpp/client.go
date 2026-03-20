@@ -14,7 +14,7 @@ type Client interface {
 	SubmitLongMsg(sm *gosmpp.ShortMessage) ([]gosmpp.ShortMessage, error)
 }
 
-func Connect(bindType, addr, user, passwd string) (Client, error) {
+func Connect(bindType, addr, user, passwd string, handler gosmpp.HandlerFunc) (Client, error) {
 	if bindType != "tx" && bindType != "trx" && bindType != "rx" {
 		return nil, fmt.Errorf("wrong bind type: %s", bindType)
 	} else {
@@ -28,9 +28,10 @@ func Connect(bindType, addr, user, passwd string) (Client, error) {
 			}
 		case "trx":
 			client = &gosmpp.Transceiver{
-				Addr:   addr,
-				User:   user,
-				Passwd: passwd,
+				Addr:    addr,
+				User:    user,
+				Passwd:  passwd,
+				Handler: handler,
 			}
 
 		case "rx":

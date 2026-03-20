@@ -6,6 +6,9 @@ import (
 	"os"
 
 	cpsmpp "cp_sms_gateway/smpp"
+
+	"github.com/fiorix/go-smpp/smpp/pdu"
+	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 )
 
 func main() {
@@ -30,20 +33,32 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, status := cpsmpp.Connect(*bindType, fmt.Sprintf("%s:%d", *host, *port), *username, *password)
+	done := make(chan struct{})
+
+	client, status := cpsmpp.Connect(*bindType, fmt.Sprintf("%s:%d", *host, *port), *username, *password, func(p pdu.Body) {
+		if p.Header().ID == 0x00000005 {
+			f := p.Fields()
+			fmt.Println("message_id:", f[pdufield.MessageID])
+			fmt.Println("status:", f[pdufield.MessageState])
+			fmt.Println("text:", f[pdufield.ShortMessage])
+			done <- struct{}{}
+		}
+
+	})
 
 	if status != nil {
 		fmt.Println(status.Error())
-	} else {
-		defer client.Close()
-		sm, err := cpsmpp.SendMessage(*from, *to, *message, *encoding, *validity, client, *register, *priority)
-		if err != nil {
-			fmt.Println("Submit error:", err)
-			os.Exit(1)
+		os.Exit(1)
+	}
 
-		}
+	defer client.Close()
+	sm, err := cpsmpp.SendMessage(*from, *to, *message, *encoding, *validity, client, *register, *priority)
+	if err != nil {
+		fmt.Println("Submit error:", err)
+		os.Exit(1)
+	}
 
-		fmt.Printf(`Sending message via %s:%d;
+	fmt.Printf(`Sending message via %s:%d;
 				Source addr: %s;
 				Destination addr: %s;
 				System ID: %s;
@@ -51,9 +66,9 @@ func main() {
 				Message Text: %s
 				`, *host, *port, *from, *to, *username, *password, *message)
 
-		for i, part := range sm {
-			fmt.Printf("Part %d: message_id=%s\n", i+1, part.RespID())
-		}
+	for i, part := range sm {
+		fmt.Printf("Part %d: message_id=%s\n", i+1, part.RespID())
 	}
+	<-done
 
 }
