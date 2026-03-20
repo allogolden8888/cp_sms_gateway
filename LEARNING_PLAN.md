@@ -13,20 +13,25 @@
 - [x] `defer` — отложенный вызов
 - [x] Обработка ошибок (`if err != nil`)
 - [x] Горутины (`go func()`)
-- [x] Каналы (`make(chan struct{})`, `<-done`, `done <- struct{}{}`)
+- [x] Каналы — небуферизованные и буферизованные, `select`, `time.After`
 - [x] Пакеты и импорты (псевдонимы импортов, экспорт через заглавную букву)
 - [x] `len([]rune(text))` vs `len(text)` — байты vs символы
+- [x] Округление вверх при целочисленном делении
+- [x] Регулярные выражения (`regexp.MustCompile`, `FindStringSubmatch`)
+- [x] Структуры (`struct`) — объявление и возврат из функции
 
 ### SMPP
 - [x] Bind типы: TX, RX, TRX
 - [x] Подключение через `go-smpp` библиотеку
 - [x] Отправка SMS (`Submit`)
-- [x] Длинные сообщения (`SubmitLongMsg`)
+- [x] Длинные сообщения (`SubmitLongMsg`) + подсчёт частей
 - [x] Кодировки: GSM7, Latin1, UCS2 — лимиты и валидация символов
 - [x] Поля `ShortMessage`: Register, PriorityFlag, Validity, TON/NPI и др.
 - [x] Validity period — относительный (`1h`) и абсолютный (`2006-01-02T15:04:05`)
-- [x] DLR (delivery report) — получение через `Handler` в Transceiver
-- [x] Формат DLR строки: `id:X sub:001 dlvrd:001 stat:DELIVRD err:000`
+- [x] DLR — получение через `Handler` в Transceiver
+- [x] Парсинг DLR строки — структура `DLR`, функция `ParseDLR`
+- [x] Multipart DLR — буферизованный канал + счётчик частей
+- [x] Таймаут ожидания DLR — из validity period, дефолт 24h
 
 ### Структура проекта
 - [x] Разбивка на пакеты: `smpp/client.go`, `smpp/message.go`, `smpp/encoding.go`, `smpp/dlr.go`
@@ -34,19 +39,10 @@
 
 ---
 
-## In Progress
-
-### DLR парсинг
-- [ ] Функция `parseDLR(text string) map[string]string`
-- [ ] Вывод распarsенных полей: `id`, `stat`, `err`, `done date`
-
----
-
 ## TODO
 
 ### DLR
-- [ ] Обработка multipart DLR (несколько частей — несколько DLR)
-- [ ] Таймаут ожидания DLR (сейчас ждёт вечно)
+- [ ] Сопоставление `message_id` из `submit_sm_resp` и из DLR через `map`
 
 ### Улучшения
 - [ ] Поддержка RX bind типа (сейчас заглушка)
@@ -54,7 +50,6 @@
 - [ ] Multi-destination (`DstList`, `SubmitMulti`)
 
 ### Go концепты (впереди)
-- [ ] Структуры (`struct`) и методы
 - [ ] Тесты (`testing` package)
 - [ ] Логирование (`log/slog`)
 - [ ] Конфигурационный файл вместо флагов (JSON/YAML)

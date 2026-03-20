@@ -9,7 +9,7 @@ import (
 	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
 )
 
-func parseValidity(value string) (time.Duration, error) {
+func ParseValidity(value string) (time.Duration, error) {
 	d, err := time.ParseDuration(value)
 	if err == nil {
 		return d, nil
@@ -21,7 +21,7 @@ func parseValidity(value string) (time.Duration, error) {
 	return time.Until(t), nil
 }
 
-func SendMessage(src, dst, text, encoding, validity string, client Client, register, priority int) ([]*gosmpp.ShortMessage, error) {
+func SendMessage(src, dst, text, encoding, validity string, client Client, register, priority int) ([]*gosmpp.ShortMessage, error, int) {
 	shortMessage := gosmpp.ShortMessage{
 		Src:            src,
 		Dst:            dst,
@@ -38,9 +38,9 @@ func SendMessage(src, dst, text, encoding, validity string, client Client, regis
 	}
 
 	if validity != "" {
-		d, err := parseValidity(validity)
+		d, err := ParseValidity(validity)
 		if err != nil {
-			return nil, err
+			return nil, err, 0
 		}
 		shortMessage.Validity = d
 	}
@@ -49,7 +49,7 @@ func SendMessage(src, dst, text, encoding, validity string, client Client, regis
 
 	encodeCheck := validateEncoding(text, encoding)
 	if encodeCheck != nil {
-		return nil, encodeCheck
+		return nil, encodeCheck, 0
 	}
 
 	switch encoding {
@@ -77,10 +77,10 @@ func SendMessage(src, dst, text, encoding, validity string, client Client, regis
 		for i := range parts {
 			result[i] = &parts[i]
 		}
-		return result, err
+		return result, err, (textLen + partMaxLen - 1) / partMaxLen
 	} else {
 		sm, err := client.Submit(&shortMessage)
-		return []*gosmpp.ShortMessage{sm}, err
+		return []*gosmpp.ShortMessage{sm}, err, partMaxLen
 	}
 
 }
