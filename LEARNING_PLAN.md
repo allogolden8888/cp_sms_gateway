@@ -50,9 +50,9 @@
 - [ ] Multi-destination (`DstList`, `SubmitMulti`)
 
 ### Go концепты (впереди)
-- [ ] Тесты (`testing` package)
+- [x] Конфигурационный файл вместо флагов (JSON + `os.ReadFile` + `json.Unmarshal`)
+- [ ] Тесты (`testing` package) ← **сейчас**
 - [ ] Логирование (`log/slog`)
-- [ ] Конфигурационный файл вместо флагов (JSON/YAML)
 
 ---
 

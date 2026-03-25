@@ -17,7 +17,7 @@ type DLR struct {
 }
 
 func ParseDLR(text string) (*DLR, error) {
-	re := regexp.MustCompile(`id:(\d+) sub:(\w+) dlvrd:(\w+) submit date:(\w+) done date:(\w+) stat:(\w+) err:(\w+) Text:(.+)`)
+	re := regexp.MustCompile(`id:(\w+) sub:(\w+) dlvrd:(\w+) submit date:(\w+) done date:(\w+) stat:(\w+) err:(\w+) Text:(.+)`)
 	result := re.FindStringSubmatch(text)
 
 	if result == nil {

@@ -21,7 +21,7 @@ func ParseValidity(value string) (time.Duration, error) {
 	return time.Until(t), nil
 }
 
-func SendMessage(src, dst, text, encoding, validity string, client Client, register, priority int) ([]*gosmpp.ShortMessage, error, int) {
+func SendMessage(src, dst, text, encoding, validity string, client Client, register, priority int) ([]*gosmpp.ShortMessage, error) {
 	shortMessage := gosmpp.ShortMessage{
 		Src:            src,
 		Dst:            dst,
@@ -40,7 +40,7 @@ func SendMessage(src, dst, text, encoding, validity string, client Client, regis
 	if validity != "" {
 		d, err := ParseValidity(validity)
 		if err != nil {
-			return nil, err, 0
+			return nil, err
 		}
 		shortMessage.Validity = d
 	}
@@ -49,7 +49,7 @@ func SendMessage(src, dst, text, encoding, validity string, client Client, regis
 
 	encodeCheck := validateEncoding(text, encoding)
 	if encodeCheck != nil {
-		return nil, encodeCheck, 0
+		return nil, encodeCheck
 	}
 
 	switch encoding {
@@ -77,10 +77,10 @@ func SendMessage(src, dst, text, encoding, validity string, client Client, regis
 		for i := range parts {
 			result[i] = &parts[i]
 		}
-		return result, err, (textLen + partMaxLen - 1) / partMaxLen
+		return result, err
 	} else {
 		sm, err := client.Submit(&shortMessage)
-		return []*gosmpp.ShortMessage{sm}, err, partMaxLen
+		return []*gosmpp.ShortMessage{sm}, err
 	}
 
 }

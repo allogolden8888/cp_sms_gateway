@@ -1,0 +1,14 @@
+{
+    "host": "localhost",
+    "port": 5555,
+    "username": "pavel",
+    "password": "wpsd",
+    "from": "Test",
+    "to": "998901331835",
+    "message": "Test",
+    "bindType": "trx",
+    "encoding": "gsm7",
+    "validity": "24h",
+    "register": 1,
+    "priority": 1
+}
