@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -18,13 +19,17 @@ func main() {
 	flag.Parse()
 
 	config, err := cpsmpp.LoadConfig(*configPath)
+	if err != nil {
+		slog.Error("config loading failed", "error", err)
+		os.Exit(1)
+	}
 
 	var timeout time.Duration
 
 	if config.Validity != "" {
 		timeout, err = cpsmpp.ParseValidity(config.Validity)
 		if err != nil {
-			fmt.Println("Invalid Validity:", err)
+			slog.Error("config validity period loading failed", "error", err)
 			os.Exit(1)
 		}
 	} else {
@@ -32,67 +37,56 @@ func main() {
 	}
 
 	if config.Encoding != "gsm7" && config.Encoding != "ucs2" && config.Encoding != "latin1" {
-		fmt.Printf("Wrong data_coding selected: %s. Allowed encodings: gsm7, ucs2, latin1", config.Encoding)
+		slog.Error("config encoding loading failed", "selected encoding", config.Encoding)
 		os.Exit(1)
 	}
 
-	done := make(chan string, 10)
+	dlrTracker := cpsmpp.NewDLRTracker()
 
-	respIDs := make(map[string]bool)
+	client, status := cpsmpp.Connect(config.BindType, fmt.Sprintf("%s:%d", config.Host, config.Port),
+		config.Username, config.Password, func(p pdu.Body) {
+			if p.Header().ID == 0x00000005 {
+				text := p.Fields()[pdufield.ShortMessage].String()
+				dlr, err := cpsmpp.ParseDLR(text)
+				if err != nil {
+					slog.Error("dlr parsing failed", "error", err)
+				} else {
+					slog.Debug("dlr received", "message_id", dlr.MessageID, "status", dlr.Status, "error", dlr.ErrorCode, "done_date", dlr.DoneDate)
+					dlrTracker.Receive(dlr)
+				}
 
-	client, status := cpsmpp.Connect(config.BindType, fmt.Sprintf("%s:%d", config.Host, config.Port), config.Username, config.Password, func(p pdu.Body) {
-		if p.Header().ID == 0x00000005 {
-			text := p.Fields()[pdufield.ShortMessage].String()
-			dlr, err := cpsmpp.ParseDLR(text)
-			if err != nil {
-				fmt.Println("DLR parse error:", err)
-			} else {
-				fmt.Printf("DLR received:\n  message_id: %s\n  status: %s\n  error: %s\n  done: %s\n",
-					dlr.MessageID, dlr.Status, dlr.ErrorCode, dlr.DoneDate)
-			}
-			_, ok := respIDs[dlr.MessageID]
-			if ok {
-				fmt.Println("Expected DLR ID")
-				done <- dlr.MessageID
 			}
 
-		}
-
-	})
+		})
 
 	if status != nil {
-		fmt.Println(status.Error())
+		slog.Error("connection failed", "error", status)
 		os.Exit(1)
 	}
 
 	sm, err := cpsmpp.SendMessage(config.From, config.To, config.Message, config.Encoding, config.Validity, client, config.Register, config.Priority)
 	if err != nil {
-		fmt.Println("Submit error:", err)
+		slog.Error("submit failed", "error", err)
 		os.Exit(1)
 	}
 
 	for _, part := range sm {
-		respIDs[part.RespID()] = true
+		dlrTracker.Expect(part.RespID())
 	}
 
-	fmt.Printf(`Sending message via %s:%d;
-				Source addr: %s;
-				Destination addr: %s;
-				System ID: %s;
-				Password: %s;
-				Message Text: %s
-				`, config.Host, config.Port, config.From, config.To, config.Username, config.Password, config.Message)
+	slog.Info("message sent", "host", config.Host, "port", config.Port, "source_addr", config.From, "destination",
+		config.To, "system_id", config.Username, "password", config.Password, "message_text", config.Message)
 
 	for i, part := range sm {
-		fmt.Printf("Part %d: message_id=%s\n", i+1, part.RespID())
+		slog.Debug("displaying submit_sm_resps", "part", i+1, "message_id", part.RespID())
 	}
-	fmt.Println("Waiting for DLR, timeout:", timeout)
+	slog.Info("dlr waiting ", "timeout", timeout.String())
 	for i := 0; i < len(sm); i++ {
 		select {
-		case id := <-done:
-			fmt.Printf("DLR для части message_id=%s\n", id)
+		case id := <-dlrTracker.Done():
+			slog.Debug("dlr received", "message_id", id)
 		case <-time.After(timeout):
-			fmt.Println("DLR Timeout")
+			slog.Info("dlr timeouted")
 			return
 		}
 	}
