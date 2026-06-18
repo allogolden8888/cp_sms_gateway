@@ -16,15 +16,19 @@ func TestParsePDUHeader(t *testing.T) {
 	})
 	data := buf.Bytes() // []byte длиной 16
 
+	test1 := bytes.NewReader(data)
+	test2 := bytes.NewReader([]byte{0x00, 0x01})
+	test3 := bytes.NewReader([]byte{})
+
 	tests := []struct {
 		name    string
-		input   []byte
+		input   *bytes.Reader
 		want    *PDUHeader
 		wantErr bool
 	}{
 		{
 			name:  "valid header",
-			input: data,
+			input: test1,
 			want: &PDUHeader{
 				Length:         16,
 				CommandID:      5,
@@ -34,12 +38,12 @@ func TestParsePDUHeader(t *testing.T) {
 		},
 		{
 			name:    "invalid short header",
-			input:   []byte{0x00, 0x01},
+			input:   test2,
 			wantErr: true,
 		},
 		{
 			name:    "invalid empty header",
-			input:   []byte{},
+			input:   test3,
 			wantErr: true,
 		},
 	}

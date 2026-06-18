@@ -13,16 +13,15 @@ type PDUHeader struct {
 	SequenceNumber uint32
 }
 
-func ParsePDUHeader(data []byte) (*PDUHeader, error) {
-	reader := bytes.NewReader(data)
+func ParsePDUHeader(r *bytes.Reader) (*PDUHeader, error) {
 
 	var h PDUHeader
 
-	if len(data) < 16 {
-		return nil, fmt.Errorf("PDU too short: got %d bytes, need 16", len(data))
+	if r.Len() < 16 {
+		return nil, fmt.Errorf("PDU too short: got %d bytes, need 16", r.Len())
 	}
 
-	err := binary.Read(reader, binary.BigEndian, &h)
+	err := binary.Read(r, binary.BigEndian, &h)
 	if err != nil {
 		return nil, err
 	}

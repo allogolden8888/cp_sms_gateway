@@ -33,6 +33,8 @@ type SubmitSM struct {
 	TLVs []TLV
 }
 
+// TODO: принимать io.Reader вместо *bytes.Reader — Seek и Len здесь не нужны,
+// привязка к конкретному типу без причины усложняет тестирование и переиспользование.
 func parseSubmitSMBody(r *bytes.Reader) (*SubmitSMBody, error) {
 	var body SubmitSMBody
 	var err error
@@ -42,6 +44,9 @@ func parseSubmitSMBody(r *bytes.Reader) (*SubmitSMBody, error) {
 		return nil, err
 	}
 
+	// TODO: для uint8 binary.Read избыточен — он использует рефлексию чтобы прочитать 1 байт,
+	// а BigEndian для однобайтового значения вообще ничего не значит.
+	// Заменить на r.ReadByte() — короче, быстрее, выразительнее.
 	err = binary.Read(r, binary.BigEndian, &body.SourceAddrTON)
 	if err != nil {
 		return nil, err
@@ -130,4 +135,38 @@ func parseSubmitSMBody(r *bytes.Reader) (*SubmitSMBody, error) {
 	body.ShortMessage = buf
 
 	return &body, nil
+}
+
+func parseSubmitSM(r *bytes.Reader) (*SubmitSM, error) {
+	var result SubmitSM
+	var header *PDUHeader
+	var body *SubmitSMBody
+	var tlvs []TLV
+	var err error
+
+	header, err = ParsePDUHeader(r)
+	if err != nil {
+		return nil, err
+	}
+
+	result.PDUHeader = *header
+
+	body, err = parseSubmitSMBody(r)
+	if err != nil {
+		return nil, err
+	}
+
+	result.SubmitSMBody = *body
+
+	// TODO: проверить, что parseTLVs трактует io.EOF как «нет TLV» и возвращает пустой слайс,
+	// а не ошибку — иначе все PDU без optional параметров сломаются.
+	tlvs, err = parseTLVs(r)
+	if err != nil {
+		return nil, err
+	}
+
+	result.TLVs = tlvs
+
+	return &result, nil
+
 }
