@@ -90,9 +90,7 @@ func TestParseSubmitSM(t *testing.T) {
 
 	got, err := parseSubmitSM(test)
 	if err != nil {
-		// TODO: t.Fatalf, не t.Errorf — если парсинг упал, got == nil,
-		// и все проверки ниже запаникуют с nil pointer dereference.
-		t.Errorf("parse error: %v", err.Error())
+		t.Fatalf("parse error: %v", err.Error())
 	}
 
 	if want.Length != got.Length {
@@ -139,8 +137,9 @@ func TestParseSubmitSM(t *testing.T) {
 		t.Errorf("Expected %v, got %v.", want.ShortMessage, got.ShortMessage)
 	}
 
-	// TODO: добавить проверку длин перед циклом, иначе паника если got.TLVs короче:
-	// if len(got.TLVs) != len(want.TLVs) { t.Fatalf(...) }
+	if len(got.TLVs) != len(want.TLVs) {
+		t.Fatalf("want TLVs length doesnt match got TLVs length")
+	}
 	for i := range len(want.TLVs) {
 		comparing1 := want.TLVs[i]
 		comparing2 := got.TLVs[i]

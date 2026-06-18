@@ -74,8 +74,16 @@
 - [x] Полный PDU парсер: body с полями разных типов (`parseSubmitSMBody`)
 - [x] Рефакторинг: субпакет `smpp/pdu/` с группировкой по типам
 - [x] TLV теги — парсинг (`parseTLV`, `parseTLVs`)
-- [ ] Struct embedding — переиспользование полей PDU
+- [x] Struct embedding — переиспользование полей PDU (`SubmitSM`)
 - [ ] Публичный `ParsePDU` — точка входа, объединяет header + body по command_id
+
+### PDU типы (необходимые для сервера)
+- [ ] `bind.go` — bind_tx/rx/trx + resp, unbind + resp
+- [ ] `deliver.go` — deliver_sm + resp
+- [ ] `session.go` — enquire_link + resp, generic_nack
+- [ ] `submit_sm_resp` — ответ на submit
+- [ ] `query.go` — query_sm + resp
+- [ ] `submit_multi` — добавить в submit.go
 
 ### SMPP сервер (режим замены SMSC)
 - [ ] `net.Listen` / `net.Accept` — TCP сервер

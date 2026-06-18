@@ -50,7 +50,7 @@ func TestParseTLVs(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-
+	
 	for i := range len(want) {
 		comparing1 := want[i]
 		comparing2 := got[i]

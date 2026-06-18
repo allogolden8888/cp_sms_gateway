@@ -158,8 +158,6 @@ func parseSubmitSM(r *bytes.Reader) (*SubmitSM, error) {
 
 	result.SubmitSMBody = *body
 
-	// TODO: проверить, что parseTLVs трактует io.EOF как «нет TLV» и возвращает пустой слайс,
-	// а не ошибку — иначе все PDU без optional параметров сломаются.
 	tlvs, err = parseTLVs(r)
 	if err != nil {
 		return nil, err

@@ -35,6 +35,9 @@ func parseTLVLine(r *bytes.Reader) (*TLV, error) {
 
 func parseTLVs(r *bytes.Reader) ([]TLV, error) {
 	var result []TLV
+	if r.Len() == 0 {
+		return result, nil
+	}
 	for r.Len() > 0 {
 		tlv, err := parseTLVLine(r)
 		if err != nil {
