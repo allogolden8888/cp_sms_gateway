@@ -68,10 +68,14 @@
 ## Фаза 3: Протокол (глубокое погружение)
 
 ### Binary протокол
-- [ ] `encoding/binary` — чтение и запись бинарных данных вручную
-- [ ] Полный PDU парсер: header (16 байт) + body
-- [ ] TLV теги — парсинг и генерация
+- [x] `encoding/binary` — чтение и запись бинарных данных вручную
+- [x] PDU заголовок (16 байт) — `ParsePDUHeader`, big-endian, uint32
+- [x] C-строки в бинарных протоколах — `readCString`
+- [x] Полный PDU парсер: body с полями разных типов (`parseSubmitSMBody`)
+- [x] Рефакторинг: субпакет `smpp/pdu/` с группировкой по типам
+- [x] TLV теги — парсинг (`parseTLV`, `parseTLVs`)
 - [ ] Struct embedding — переиспользование полей PDU
+- [ ] Публичный `ParsePDU` — точка входа, объединяет header + body по command_id
 
 ### SMPP сервер (режим замены SMSC)
 - [ ] `net.Listen` / `net.Accept` — TCP сервер

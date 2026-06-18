@@ -1,4 +1,4 @@
-package smpp
+package pdu
 
 import (
 	"bytes"
@@ -28,10 +28,4 @@ func ParsePDUHeader(data []byte) (*PDUHeader, error) {
 	}
 
 	return &h, nil
-}
-
-func readCString(r *bytes.Reader) (string, error) {
-	for i := range len(r) {
-
-	}
 }

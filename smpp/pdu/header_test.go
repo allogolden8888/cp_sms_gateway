@@ -1,4 +1,4 @@
-package smpp
+package pdu
 
 import (
 	"bytes"
