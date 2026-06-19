@@ -2,7 +2,6 @@ package pdu
 
 import (
 	"bytes"
-	"encoding/binary"
 	"fmt"
 )
 
@@ -41,7 +40,7 @@ const (
 	CommandBindTransmitter     uint32 = 0x00000002
 	CommandBindReceiver        uint32 = 0x00000001
 	CommandBindTransceiver     uint32 = 0x00000009
-	CommandGenerickNACK        uint32 = 0x80000000
+	CommandGenericNACK         uint32 = 0x80000000
 	CommandBindTransmitterResp uint32 = 0x80000002
 	CommandBindReceiverResp    uint32 = 0x80000001
 	CommandBindTransceiverResp uint32 = 0x80000009
@@ -49,6 +48,9 @@ const (
 	CommandUnbindResp          uint32 = 0x80000006
 )
 
+// TODO: заменить *bytes.Reader на io.ByteReader — функция вызывает readCString и r.ReadByte(),
+// оба требуют только io.ByteReader. После изменений pdu.go и header.go это станет возможным.
+// parseBind и публичные функции можно оставить на *bytes.Reader — он удовлетворяет обоим интерфейсам.
 func parseBindBody(r *bytes.Reader) (*BindBody, error) {
 	var result BindBody
 	var err error
@@ -68,17 +70,17 @@ func parseBindBody(r *bytes.Reader) (*BindBody, error) {
 		return nil, err
 	}
 
-	err = binary.Read(r, binary.BigEndian, &result.InterfaceVersion)
+	result.InterfaceVersion, err = r.ReadByte()
 	if err != nil {
 		return nil, err
 	}
 
-	err = binary.Read(r, binary.BigEndian, &result.AddrTON)
+	result.AddrTON, err = r.ReadByte()
 	if err != nil {
 		return nil, err
 	}
 
-	err = binary.Read(r, binary.BigEndian, &result.AddrNPI)
+	result.AddrNPI, err = r.ReadByte()
 	if err != nil {
 		return nil, err
 	}
@@ -92,12 +94,7 @@ func parseBindBody(r *bytes.Reader) (*BindBody, error) {
 }
 
 func ParseBindTransmitter(r *bytes.Reader) (*BindTransmitter, error) {
-	var result BindTransmitter
-	var err error
-	var header *PDUHeader
-	var body *BindBody
-
-	header, err = ParsePDUHeader(r)
+	body, header, err := parseBind(r, CommandBindTransmitter)
 	if err != nil {
 		return nil, err
 	}
@@ -106,25 +103,11 @@ func ParseBindTransmitter(r *bytes.Reader) (*BindTransmitter, error) {
 		return nil, fmt.Errorf("failed to parse Transmitter, wrong CommandID: %d", header.CommandID)
 	}
 
-	result.PDUHeader = *header
-
-	body, err = parseBindBody(r)
-	if err != nil {
-		return nil, err
-	}
-
-	result.BindBody = *body
-
-	return &result, nil
+	return &BindTransmitter{PDUHeader: *header, BindBody: *body}, nil
 }
 
 func ParseBindReceiver(r *bytes.Reader) (*BindReceiver, error) {
-	var result BindReceiver
-	var err error
-	var header *PDUHeader
-	var body *BindBody
-
-	header, err = ParsePDUHeader(r)
+	body, header, err := parseBind(r, CommandBindReceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -133,25 +116,11 @@ func ParseBindReceiver(r *bytes.Reader) (*BindReceiver, error) {
 		return nil, fmt.Errorf("failed to parse Receiver, wrong CommandID: %d", header.CommandID)
 	}
 
-	result.PDUHeader = *header
-
-	body, err = parseBindBody(r)
-	if err != nil {
-		return nil, err
-	}
-
-	result.BindBody = *body
-
-	return &result, nil
+	return &BindReceiver{PDUHeader: *header, BindBody: *body}, nil
 }
 
 func ParseBindTransceiver(r *bytes.Reader) (*BindTransceiver, error) {
-	var result BindTransceiver
-	var err error
-	var header *PDUHeader
-	var body *BindBody
-
-	header, err = ParsePDUHeader(r)
+	body, header, err := parseBind(r, CommandBindTransceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -160,14 +129,27 @@ func ParseBindTransceiver(r *bytes.Reader) (*BindTransceiver, error) {
 		return nil, fmt.Errorf("failed to parse Transceiver, wrong CommandID: %d", header.CommandID)
 	}
 
-	result.PDUHeader = *header
+	return &BindTransceiver{PDUHeader: *header, BindBody: *body}, nil
+}
+
+func parseBind(r *bytes.Reader, expectedCommandID uint32) (*BindBody, *PDUHeader, error) {
+	var err error
+	var header *PDUHeader
+	var body *BindBody
+
+	header, err = ParsePDUHeader(r)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if header.CommandID != expectedCommandID {
+		return nil, nil, fmt.Errorf("failed to parse %v, wrong CommandID: %d", expectedCommandID, header.CommandID)
+	}
 
 	body, err = parseBindBody(r)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	result.BindBody = *body
-
-	return &result, nil
+	return body, header, nil
 }

@@ -13,6 +13,9 @@ type PDUHeader struct {
 	SequenceNumber uint32
 }
 
+// TODO: заменить *bytes.Reader на io.Reader — здесь нужен только binary.Read, который принимает io.Reader.
+// Убрать проверку r.Len() < 16: binary.Read сам вернёт ошибку если байт не хватит.
+// Убрать импорт "bytes", добавить "io".
 func ParsePDUHeader(r *bytes.Reader) (*PDUHeader, error) {
 
 	var h PDUHeader
