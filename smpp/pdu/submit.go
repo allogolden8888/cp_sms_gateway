@@ -3,6 +3,7 @@ package pdu
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io"
 )
 
@@ -31,6 +32,40 @@ type SubmitSM struct {
 	PDUHeader
 	SubmitSMBody
 	TLVs []TLV
+}
+
+type SubmitSMResp struct {
+	PDUHeader
+	MessageID string
+}
+
+const (
+	CommandSubmitSM     uint32 = 0x00000004
+	CommandSubmitSMResp uint32 = 0x80000004
+)
+
+func ParseSubmitSMResp(r *bytes.Reader) (*SubmitSMResp, error) {
+	var messageID string
+	header, err := ParsePDUHeader(r)
+	if err != nil {
+		return nil, err
+	}
+
+	if header.CommandID != CommandSubmitSMResp {
+		return nil, fmt.Errorf("failed to parse SubmitSMResp, wrong CommandID: %d", header.CommandID)
+	}
+
+	messageID, err = readCString(r)
+	if err != nil {
+		return nil, err
+	}
+
+	result := SubmitSMResp{
+		PDUHeader: *header,
+		MessageID: messageID,
+	}
+
+	return &result, nil
 }
 
 // TODO: принимать io.Reader вместо *bytes.Reader — Seek и Len здесь не нужны,
@@ -147,6 +182,10 @@ func parseSubmitSM(r *bytes.Reader) (*SubmitSM, error) {
 	header, err = ParsePDUHeader(r)
 	if err != nil {
 		return nil, err
+	}
+
+	if header.CommandID != CommandSubmitSM {
+		return nil, fmt.Errorf("failed to parse SubmitSM, wrong CommandID: %d", header.CommandID)
 	}
 
 	result.PDUHeader = *header

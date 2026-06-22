@@ -36,17 +36,90 @@ type BindResp struct {
 	TLVs     []TLV
 }
 
+type UnbindResp struct {
+	PDUHeader
+}
+
+type Unbind struct {
+	PDUHeader
+}
+
 const (
 	CommandBindTransmitter     uint32 = 0x00000002
 	CommandBindReceiver        uint32 = 0x00000001
 	CommandBindTransceiver     uint32 = 0x00000009
-	CommandGenericNACK         uint32 = 0x80000000
 	CommandBindTransmitterResp uint32 = 0x80000002
 	CommandBindReceiverResp    uint32 = 0x80000001
 	CommandBindTransceiverResp uint32 = 0x80000009
 	CommandUnbind              uint32 = 0x00000006
 	CommandUnbindResp          uint32 = 0x80000006
 )
+
+func ParseUnbind(r *bytes.Reader) (*Unbind, error) {
+	header, err := ParsePDUHeader(r)
+	if err != nil {
+		return nil, err
+	}
+
+	if header.CommandID != CommandUnbind {
+		return nil, fmt.Errorf("failed to parse Unbind, wrong CommandID: %d", header.CommandID)
+	}
+
+	result := Unbind{
+		PDUHeader: *header,
+	}
+
+	return &result, nil
+}
+
+func ParseUnbindResp(r *bytes.Reader) (*UnbindResp, error) {
+	header, err := ParsePDUHeader(r)
+	if err != nil {
+		return nil, err
+	}
+
+	if header.CommandID != CommandUnbindResp {
+		return nil, fmt.Errorf("failed to parse UnbindResp, wrong CommandID: %d", header.CommandID)
+	}
+
+	result := UnbindResp{
+		PDUHeader: *header,
+	}
+
+	return &result, nil
+}
+
+
+func ParseBindResp(r *bytes.Reader, commandID uint32) (*BindResp, error) {
+	var systemID string
+	var tlvs []TLV
+	header, err := ParsePDUHeader(r)
+	if err != nil {
+		return nil, err
+	}
+
+	if header.CommandID != commandID {
+		return nil, fmt.Errorf("failed to parse BindResp, wrong CommandID: %d", header.CommandID)
+	}
+
+	systemID, err = readCString(r)
+	if err != nil {
+		return nil, err
+	}
+
+	tlvs, err = parseTLVs(r)
+	if err != nil {
+		return nil, err
+	}
+
+	result := BindResp{
+		PDUHeader: *header,
+		SystemID:  systemID,
+		TLVs:      tlvs,
+	}
+
+	return &result, nil
+}
 
 // TODO: заменить *bytes.Reader на io.ByteReader — функция вызывает readCString и r.ReadByte(),
 // оба требуют только io.ByteReader. После изменений pdu.go и header.go это станет возможным.

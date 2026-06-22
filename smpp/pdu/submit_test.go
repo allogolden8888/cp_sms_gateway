@@ -63,7 +63,7 @@ func TestParseSubmitSM(t *testing.T) {
 	want := &SubmitSM{
 		PDUHeader: PDUHeader{
 			Length:         65,
-			CommandID:      5,
+			CommandID:      0x00000004,
 			CommandStatus:  0,
 			SequenceNumber: 1,
 		},
@@ -191,7 +191,7 @@ func makeFullSubmitSMBytes() []byte {
 	// но линтеры будут ругаться. Вынести в must-хелпер: mustWrite(binary.Write(...))
 	binary.Write(&buf, binary.BigEndian, PDUHeader{
 		Length:         65,
-		CommandID:      5,
+		CommandID:      0x00000004,
 		CommandStatus:  0,
 		SequenceNumber: 1,
 	})
