@@ -78,16 +78,16 @@
 - [ ] Публичный `ParsePDU` — точка входа, объединяет header + body по command_id
 
 ### PDU типы (необходимые для сервера)
-- [ ] `bind.go` — bind_tx/rx/trx + resp, unbind + resp
-- [ ] `deliver.go` — deliver_sm + resp
-- [ ] `session.go` — enquire_link + resp, generic_nack
-- [ ] `submit_sm_resp` — ответ на submit
-- [ ] `query.go` — query_sm + resp
+- [x] `bind.go` — bind_tx/rx/trx + resp, unbind + resp
+- [x] `deliver.go` — deliver_sm + resp
+- [x] `session.go` — enquire_link + resp, generic_nack
+- [x] `submit_sm_resp` — ответ на submit
+- [x] `query.go` — query_sm + resp
 - [ ] `submit_multi` — добавить в submit.go
 
 ### SMPP сервер (режим замены SMSC)
-- [ ] `net.Listen` / `net.Accept` — TCP сервер
-- [ ] Обработка входящих SMPP-подключений
+- [x] `net.Listen` / `net.Accept` — TCP сервер
+- [x] Обработка входящих SMPP-подключений
 - [ ] Ответы на `bind`, `submit_sm`, генерация DLR
 - [ ] `io.Reader` / `io.Writer` интерфейсы
 

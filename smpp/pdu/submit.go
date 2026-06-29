@@ -207,3 +207,23 @@ func parseSubmitSM(r *bytes.Reader) (*SubmitSM, error) {
 	return &result, nil
 
 }
+
+func SerializeSubmitSMResp(resp *SubmitSMResp) []byte {
+	var buf bytes.Buffer
+
+	pduLen := 16 + len(resp.MessageID) + 1
+
+	var result []byte
+
+	binary.Write(&buf, binary.BigEndian, PDUHeader{
+		Length:         uint32(pduLen),
+		CommandID:      resp.CommandID,
+		CommandStatus:  resp.CommandStatus,
+		SequenceNumber: resp.SequenceNumber,
+	})
+
+	result = append(buf.Bytes(), []byte(resp.MessageID)...)
+	result = append(result, byte(0x00))
+
+	return result
+}

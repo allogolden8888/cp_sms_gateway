@@ -2,6 +2,7 @@ package pdu
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 )
 
@@ -88,7 +89,6 @@ func ParseUnbindResp(r *bytes.Reader) (*UnbindResp, error) {
 
 	return &result, nil
 }
-
 
 func ParseBindResp(r *bytes.Reader, commandID uint32) (*BindResp, error) {
 	var systemID string
@@ -225,4 +225,24 @@ func parseBind(r *bytes.Reader, expectedCommandID uint32) (*BindBody, *PDUHeader
 	}
 
 	return body, header, nil
+}
+
+func SerializeBindResp(resp *BindResp) []byte {
+	var buf bytes.Buffer
+
+	pduLen := 16 + len(resp.SystemID) + 1
+
+	var result []byte
+
+	binary.Write(&buf, binary.BigEndian, PDUHeader{
+		Length:         uint32(pduLen),
+		CommandID:      resp.CommandID,
+		CommandStatus:  resp.CommandStatus,
+		SequenceNumber: resp.SequenceNumber,
+	})
+
+	result = append(buf.Bytes(), []byte(resp.SystemID)...)
+	result = append(result, byte(0x00))
+
+	return result
 }

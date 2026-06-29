@@ -55,6 +55,49 @@ func handleConnection(conn net.Conn) {
 		parsedPDU, err := pdu.ParsePDU(pdubytes)
 		fmt.Printf("Received PDU: %v", reflect.TypeOf(parsedPDU))
 
+		switch v := parsedPDU.(type) {
+		case *pdu.BindReceiver:
+			var b pdu.BindResp
+
+			b.CommandID = pdu.CommandBindReceiverResp
+			b.CommandStatus = 0
+			b.SequenceNumber = v.SequenceNumber
+			b.SystemID = v.SystemID
+
+			conn.Write(pdu.SerializeBindResp(&b))
+			fmt.Println("Sent Bind Resp:", b.SequenceNumber)
+		case *pdu.BindTransmitter:
+			var b pdu.BindResp
+
+			b.CommandID = pdu.CommandBindTransmitterResp
+			b.CommandStatus = 0
+			b.SequenceNumber = v.SequenceNumber
+			b.SystemID = v.SystemID
+
+			conn.Write(pdu.SerializeBindResp(&b))
+			fmt.Println("Sent Bind Resp:", b.SequenceNumber)
+		case *pdu.BindTransceiver:
+			var b pdu.BindResp
+
+			b.CommandID = pdu.CommandBindTransceiverResp
+			b.CommandStatus = 0
+			b.SequenceNumber = v.SequenceNumber
+			b.SystemID = v.SystemID
+
+			conn.Write(pdu.SerializeBindResp(&b))
+			fmt.Printf("\nSent Bind Resp: %d\n", b.SequenceNumber)
+		case *pdu.SubmitSM:
+			var s pdu.SubmitSMResp
+
+			s.CommandID = pdu.CommandBindTransceiverResp
+			s.CommandStatus = 0
+			s.SequenceNumber = v.SequenceNumber
+
+			s.MessageID = "1"
+
+			conn.Write(pdu.SerializeSubmitSMResp(&s))
+			fmt.Printf("\nSent SubmitSMResp: %v\n", s.MessageID)
+		}
 	}
 
 }
